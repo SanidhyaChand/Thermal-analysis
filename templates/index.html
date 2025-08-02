@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermal Image Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="top-header">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Institution Logo">
+        </div>
+        <div class="header-separator"></div>
+        <div class="school-name">
+            <span class="school-name-line">Centre for</span>
+            <span class="school-name-line">Smart Grid Technologies</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="header">
+            <h1>Thermal Analysis</h1>
+            <p>Analysis of hotspots and coldspots in any image.</p>
+        </div>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+
+            <div class="upload-area">
+                <input type="file" name="file" id="file" class="file-input" required>
+                <label for="file" class="file-label">
+                    <span class="file-icon">📤</span>
+                    <span class="file-label-text">Click to Upload an Image</span>
+                </label>
+            </div>
+
+            <h2 class="section-title">Analysis Settings</h2>
+            <div class="form-grid">
+                <div class="setting-item">
+                    <label for="highest_temp">Highest Temp (°C)</label>
+                    <input type="number" name="highest_temp" id="highest_temp" value="{{ highest_temp }}" step="any">
+                </div>
+                <div class="setting-item">
+                    <label for="lowest_temp">Lowest Temp (°C)</label>
+                    <input type="number" name="lowest_temp" id="lowest_temp" value="{{ lowest_temp }}" step="any">
+                </div>
+                <div class="setting-item">
+                    <label for="hotspot_temp">Hotspot Threshold (°C)</label>
+                    <input type="number" name="hotspot_temp" id="hotspot_temp" value="{{ hotspot_temp }}" step="any">
+                </div>
+                <div class="setting-item">
+                    <label for="coldspot_temp">Coldspot Threshold (°C)</label>
+                    <input type="number" name="coldspot_temp" id="coldspot_temp" value="{{ coldspot_temp }}" step="any">
+                </div>
+            </div>
+
+            <div class="display-mode-selector">
+                <label for="display_mode">Display Mode</label>
+                <select name="display_mode" id="display_mode">
+                    {% set selected_mode = display_mode or 'both' %}
+                    <option value="both" {% if selected_mode == 'both' %}selected{% endif %}>Show Both</option>
+                    <option value="hot_only" {% if selected_mode == 'hot_only' %}selected{% endif %}>Hotspots Only</option>
+                    <option value="cold_only" {% if selected_mode == 'cold_only' %}selected{% endif %}>Coldspots Only</option>
+                </select>
+            </div>
+            <button type="submit">Analyze Image</button>
+        </form>
+
+        {% if processed_image %}
+        <div class="results-container">
+            <h2 class="section-title">Results</h2>
+            <div class="image-wrapper">
+                <img src="data:image/jpeg;base64,{{ processed_image }}" alt="Processed Thermal Image">
+            </div>
+
+            {% if hotspot_report or coldspot_report %}
+            <div class="analysis-report">
+                <div class="report-columns">
+                    {% if hotspot_report %}
+                    <div class="report-column">
+                        <h3><span class="hot-highlight">Hotspots Detected</span></h3>
+                        <table>
+                            <thead>
+                                <tr><th>ID</th><th>Avg Temp</th><th>Peak Temp</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for spot in hotspot_report %}
+                                <tr>
+                                    <td>{{ spot.id }}</td>
+                                    <td>{{ "%.1f"|format(spot.avg_temp) }}°C</td>
+                                    <td>{{ "%.1f"|format(spot.peak_temp) }}°C</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    {% if coldspot_report %}
+                    <div class="report-column">
+                        <h3><span class="cold-highlight">Coldspots Detected</span></h3>
+                        <table>
+                            <thead>
+                                <tr><th>ID</th><th>Avg Temp</th><th>Peak Temp</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for spot in coldspot_report %}
+                                <tr>
+                                    <td>{{ spot.id }}</td>
+                                    <td>{{ "%.1f"|format(spot.avg_temp) }}°C</td>
+                                    <td>{{ "%.1f"|format(spot.peak_temp) }}°C</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file');
+        const fileLabelText = document.querySelector('.file-label-text');
+        const defaultFileText = fileLabelText.textContent;
+
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                fileLabelText.textContent = this.files[0].name;
+            } else {
+                fileLabelText.textContent = defaultFileText;
+            }
+        });
+    </script>
+</body>
+</html>
