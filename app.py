@@ -126,4 +126,11 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import os
+
+    # Render provides the 'PORT' environment variable automatically
+    # We default to 10000 if it's not found (Render's common default)
+    port = int(os.environ.get("PORT", 10000))
+
+    # Host must be '0.0.0.0' to be accessible externally
+    app.run(host='0.0.0.0', port=port)
