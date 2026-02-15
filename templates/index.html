@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Thermal Maintenance Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="top-header">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Institution Logo">
+        </div>
+        <div class="header-separator"></div>
+        <div class="school-name">
+            <span class="school-name-line">Centre for</span>
+            <span class="school-name-line">Smart Grid Technologies</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="header">
+            <h1>Thermal Diagnostics 2.0</h1>
+            <p>AI-Driven Asset Health Monitoring & Area-Ratio Analysis</p>
+        </div>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            <div class="upload-area">
+                <input type="file" name="file" id="file" class="file-input" required>
+                <label for="file" class="file-label">
+                    <span class="file-icon">📤</span>
+                    <span class="file-label-text">Click to Upload Thermal Image</span>
+                </label>
+            </div>
+
+            <h2 class="section-title">Analysis Configuration</h2>
+            <div class="form-grid">
+                <div class="setting-item">
+                    <label for="t_max">Scale Max (°C)</label>
+                    <input type="number" name="t_max" id="t_max" value="{{ t_max }}" step="any">
+                </div>
+                <div class="setting-item">
+                    <label for="t_min">Scale Min (°C)</label>
+                    <input type="number" name="t_min" id="t_min" value="{{ t_min }}" step="any">
+                </div>
+                <div class="setting-item">
+                    <label for="manual_thresh">Manual Safety Limit (°C)</label>
+                    <input type="number" name="manual_thresh" id="manual_thresh" value="{{ manual_thresh }}" step="any">
+                </div>
+            </div>
+            <button type="submit">Execute System Audit</button>
+        </form>
+
+        {% if img %}
+        <div class="results-container">
+            <h2 class="section-title">Diagnostic Results</h2>
+
+            {% if show_fallback_ui %}
+            <div class="alert-warning">
+                ⚠️ <strong>AI Confidence Low:</strong> Switched to Manual Analysis using threshold: {{ active_limit }}°C.
+            </div>
+            {% endif %}
+
+            <div class="ai-summary-panel">
+                <h3>🔍 Asset Audit</h3>
+                <ul class="asset-list">
+                    {% for item in ai_results %}
+                        <li>✅ Detected <strong>{{ item.name }}</strong> ({{ (item.conf * 100)|round }}% confidence)</li>
+                    {% else %}
+                        <li>⚪ No specific assets identified by AI.</li>
+                    {% endfor %}
+                </ul>
+                <div class="limit-display">
+                    Base Safety Limit: <strong>{{ active_limit }}°C</strong> (Caution at {{ (active_limit * 0.85)|round(1) }}°C)
+                </div>
+            </div>
+
+            <div class="health-status-bar">
+                <div class="status-flag">{{ overall_flag }}</div>
+                <div class="ratio-breakdown">{{ ratio_text }}</div>
+            </div>
+
+            <div class="dashboard-layout">
+                <div class="image-wrapper">
+                    <img src="data:image/jpeg;base64,{{ img }}" alt="Processed Thermal Analysis View">
+                </div>
+
+                <div class="report-container">
+                    <h3>Heat Zone Intensity Report</h3>
+                    <div class="scroll-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Zone</th>
+                                    <th>Peak (°C)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for z in report %}
+                                <tr class="{% if z.status == 'HAZARD' %}hazard-row{% elif z.status == 'CAUTION' %}caution-row{% endif %}">
+                                    <td>Zone {{ z.id }}</td>
+                                    <td>{{ z.temp }}°C</td>
+                                    <td>
+                                        {% if z.status == 'HAZARD' %}🔴 HAZARD
+                                        {% elif z.status == 'CAUTION' %}🟡 CAUTION
+                                        {% else %}🟢 STABLE
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file');
+        const fileLabelText = document.querySelector('.file-label-text');
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                fileLabelText.textContent = this.files[0].name;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+# requirements.txt
+Flask
+opencv-python-headless  # Use 'headless' for servers without a display
+numpy
+ultralytics
+gunicorn                # Production web server
